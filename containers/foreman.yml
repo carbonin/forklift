@@ -27,6 +27,18 @@
       tags:
         - always
 
+    - set_fact:
+        candlepin_database: candlepin
+      tags:
+        - always
+      when: data_import
+
+    - set_fact:
+        candlepin_database: foreman
+      tags:
+        - always
+      when: not data_import
+
     - import_tasks: deploy/project.yml
 
     - import_tasks: deploy/secrets/secrets.yml
@@ -36,16 +48,17 @@
         - start
 
     - import_tasks: deploy/foreman/config-maps.yml
+    - import_tasks: deploy/candlepin/configmap.yml
 
     - import_tasks: deploy/service_accounts.yml
 
     - import_tasks: deploy/postgres/persistent_volume_claims.yml
     - import_tasks: deploy/pulp/persistent_volume_claims.yml
 
-    - import_tasks: deploy/import/jobs.yml
-      when: data_import
-      tags:
-        - start
+    #- import_tasks: deploy/import/jobs.yml
+    #  when: data_import
+    #  tags:
+    #    - start
 
     - import_tasks: deploy/candlepin/services.yml
     - import_tasks: deploy/foreman-proxy/services.yml

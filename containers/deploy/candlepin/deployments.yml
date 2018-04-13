@@ -34,6 +34,9 @@
                           securityContext: {}
                           state: present
                           volumeMounts:
+                            - readOnly: false
+                              mountPath: /etc/candlepin
+                              name: candlepin-config
                             - readOnly: true
                               mountPath: /etc/candlepin/certs
                               name: ca
@@ -66,6 +69,9 @@
                                   key: ca.crt
                               secretName: ca
                           name: ca
+                        - name: candlepin-config
+                          configMap:
+                              name: candlepin-configs
               replicas: 1
               strategy:
                   type: Rolling
