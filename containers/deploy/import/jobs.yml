@@ -36,12 +36,14 @@
                 value: "{{ import_source_host }}"
               - name: SOURCE_USER
                 value: "{{ import_source_user }}"
-              image: docker.io/bdunne/data-sync:latest
+              image: docker.io/carbonin/data-sync:latest
               volumeMounts:
               - name: ssh-private-key
                 mountPath: "/root/.ssh"
               - name: "{{ item.name }}-data"
                 mountPath: "/pv"
+            serviceAccount: anyuid
+            serviceAccountName: anyuid
             volumes:
             - name: ssh-private-key
               secret:
@@ -53,8 +55,55 @@
   with_items:
   - {name: 'pulp',     source: '/var/lib/pulp'}
   - {name: 'mongodb',  source: '/var/lib/mongodb'}
-  - {name: 'puppet',   source: '/etc/puppet/environments'}
-  - {name: 'postgres', source: '/var/lib/pgsql/data'}
+  - {name: 'puppet',   source: '/etc/puppetlabs/code/environments'}
+
+- name: Create PG import job
+  k8s_v1_job:
+    state: "{{ deployment_state }}"
+    namespace: "{{ project_name }}"
+    resource_definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: "postgres-import"
+      spec:
+        template:
+          metadata:
+            name: "postgres-import"
+          spec:
+            containers:
+            - name: "postgres-import"
+              env:
+              - name: SOURCE_DIRECTORY
+                value: "/var/lib/pgsql/data"
+              - name: SOURCE_HOST
+                value: "{{ import_source_host }}"
+              - name: SOURCE_USER
+                value: "{{ import_source_user }}"
+              - name: PRE_SYNC
+                value: pg_pre_sync
+              - name: POST_SYNC
+                value: pg_post_sync
+              - name: PGDATA
+                value: /var/lib/pgsql/data/userdata
+              - name: SYNC_DIR
+                value: userdata
+              image: docker.io/carbonin/data-sync:latest
+              volumeMounts:
+              - name: ssh-private-key
+                mountPath: "/root/.ssh"
+              - name: "postgres-data"
+                mountPath: "/pv"
+            serviceAccount: anyuid
+            serviceAccountName: anyuid
+            volumes:
+            - name: ssh-private-key
+              secret:
+                secretName: data-import
+            - name: "postgres-data"
+              persistentVolumeClaim:
+                claimName: "postgres-data"
+            restartPolicy: Never
 
 - name: Check job state
   k8s_v1_job:

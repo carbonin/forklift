@@ -6,5 +6,7 @@ RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
 
 COPY container-assets/entrypoint /entrypoint
 COPY container-assets/nss_wrapper /nss_wrapper
+COPY container-assets/pg_pre_sync /pg_pre_sync
+COPY container-assets/pg_post_sync /pg_post_sync
 
 CMD ["/entrypoint"]

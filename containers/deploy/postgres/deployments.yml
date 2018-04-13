@@ -45,6 +45,8 @@
                               mountPath: /var/lib/pgsql/data
                               name: postgres-data
                           image: ansible/postgresql
+                      serviceAccount: anyuid
+                      serviceAccountName: anyuid
                       volumes:
                         - name: postgres-data
                           persistentVolumeClaim:
